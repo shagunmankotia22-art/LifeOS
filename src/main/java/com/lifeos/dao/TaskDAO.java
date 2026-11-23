@@ -1,3 +1,4 @@
+
 package com.lifeos.dao;
 
 import com.lifeos.database.DBConnection;
@@ -9,8 +10,12 @@ import java.util.List;
 
 public class TaskDAO {
 
+    // 1. Create a new task
     public boolean createTask(Task task) {
-        String sql = "INSERT INTO tasks (user_id, title, description, priority, status, due_date) VALUES (?, ?, ?, ?, ?, ?)";
+
+        String sql = "INSERT INTO tasks "
+                + "(user_id, title, description, priority, status, due_date) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -30,7 +35,9 @@ public class TaskDAO {
         }
     }
 
+    // 2. Get all tasks of a user
     public List<Task> getTasksByUser(int userId) {
+
         List<Task> tasks = new ArrayList<>();
         String sql = "SELECT * FROM tasks WHERE user_id = ?";
 
@@ -52,8 +59,12 @@ public class TaskDAO {
         return tasks;
     }
 
+    // 3. Update a task
     public boolean updateTask(Task task) {
-        String sql = "UPDATE tasks SET title = ?, description = ?, priority = ?, status = ?, due_date = ? WHERE task_id = ? AND user_id = ?";
+
+        String sql = "UPDATE tasks SET title = ?, description = ?, "
+                + "priority = ?, status = ?, due_date = ? "
+                + "WHERE task_id = ? AND user_id = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -74,8 +85,11 @@ public class TaskDAO {
         }
     }
 
+    // 4. Delete a task
     public boolean deleteTask(int taskId, int userId) {
-        String sql = "DELETE FROM tasks WHERE task_id = ? AND user_id = ?";
+
+        String sql = "DELETE FROM tasks "
+                + "WHERE task_id = ? AND user_id = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -91,9 +105,13 @@ public class TaskDAO {
         }
     }
 
+    // 5. Search tasks
     public List<Task> searchTasks(int userId, String keyword) {
+
         List<Task> tasks = new ArrayList<>();
-        String sql = "SELECT * FROM tasks WHERE user_id = ? AND (title LIKE ? OR description LIKE ?)";
+
+        String sql = "SELECT * FROM tasks WHERE user_id = ? "
+                + "AND (title LIKE ? OR description LIKE ?)";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -115,14 +133,17 @@ public class TaskDAO {
         return tasks;
     }
 
+    // 6. Filter tasks
     public List<Task> filterTasks(int userId, String column, String value) {
+
         List<Task> tasks = new ArrayList<>();
 
         if (!column.equals("status") && !column.equals("priority")) {
             return tasks;
         }
 
-        String sql = "SELECT * FROM tasks WHERE user_id = ? AND " + column + " = ?";
+        String sql = "SELECT * FROM tasks WHERE user_id = ? AND "
+                + column + " = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -143,14 +164,17 @@ public class TaskDAO {
         return tasks;
     }
 
+    // 7. Sort tasks
     public List<Task> sortTasks(int userId, String sortBy) {
+
         List<Task> tasks = new ArrayList<>();
 
         if (!sortBy.equals("due_date") && !sortBy.equals("priority")) {
             return tasks;
         }
 
-        String sql = "SELECT * FROM tasks WHERE user_id = ? ORDER BY " + sortBy;
+        String sql = "SELECT * FROM tasks WHERE user_id = ? ORDER BY "
+                + sortBy;
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -170,8 +194,12 @@ public class TaskDAO {
         return tasks;
     }
 
+    // 8. Mark task as completed and save completion date
     public boolean markCompleted(int taskId, int userId) {
-        String sql = "UPDATE tasks SET status = 'COMPLETED' WHERE task_id = ? AND user_id = ?";
+
+        String sql = "UPDATE tasks SET status = 'COMPLETED', "
+                + "completed_at = CURDATE() "
+                + "WHERE task_id = ? AND user_id = ?";
 
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -187,7 +215,37 @@ public class TaskDAO {
         }
     }
 
+    // 9. Get tasks completed this week (Monday to today)
+    public int getWeeklyCompletedTasks(int userId) {
+
+        String sql = "SELECT COUNT(*) FROM tasks "
+                + "WHERE user_id = ? "
+                + "AND status = 'COMPLETED' "
+                + "AND completed_at >= DATE_SUB(CURDATE(), "
+                + "INTERVAL WEEKDAY(CURDATE()) DAY) "
+                + "AND completed_at <= CURDATE()";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    // 10. Convert database record into Task object
     private Task mapTask(ResultSet rs) throws SQLException {
+
         return new Task(
             rs.getInt("task_id"),
             rs.getInt("user_id"),

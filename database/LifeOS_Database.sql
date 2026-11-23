@@ -8,7 +8,6 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 -- 2. TASKS TABLE
 CREATE TABLE tasks (
     task_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -18,6 +17,7 @@ CREATE TABLE tasks (
     priority ENUM('HIGH', 'MEDIUM', 'LOW') DEFAULT 'MEDIUM',
     status ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED') DEFAULT 'PENDING',
     due_date DATE,
+    completed_at DATE NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
         ON DELETE CASCADE
